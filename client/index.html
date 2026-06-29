@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip 7</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --felt:       #1b4d30;
+  --felt-l:     #236038;
+  --felt-d:     #122e1e;
+  --card-bg:    #f8f0e0;
+  --gold:       #f0b429;
+  --gold-d:     #c9930a;
+  --navy:       #1a2535;
+  --txt:        #f5f0e8;
+  --muted:      #8da89a;
+  --danger:     #e74c3c;
+  --card-w:     60px;
+  --card-h:     84px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--felt-d);
+  color: var(--txt);
+  min-height: 100vh;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── LOBBY ── */
+#lobby {
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+  background: var(--felt-d);
+}
+.logo h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3.5rem, 12vw, 6rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 2px 30px rgba(240,180,41,.45);
+  line-height: 1;
+  text-align: center;
+}
+.logo p { color: var(--muted); text-align: center; letter-spacing: 3px; text-transform: uppercase; font-size: .8rem; margin-top: 6px; }
+
+.panel {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+}
+.panel h2 { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.3rem; margin-bottom: 22px; text-align: center; }
+
+.tabs { display: flex; gap: 0; margin-bottom: 24px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); }
+.tab { flex: 1; padding: 11px; background: rgba(255,255,255,.04); color: var(--muted); font-weight: 600; font-size: .9rem; cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all .15s; }
+.tab.active { background: var(--gold); color: var(--navy); }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: .75rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.field input {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 9px;
+  color: var(--txt);
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color .2s;
+  letter-spacing: .5px;
+}
+.field input:focus { border-color: var(--gold); }
+.field input::placeholder { color: var(--muted); }
+.field input.code-input { text-transform: uppercase; letter-spacing: 4px; font-size: 1.3rem; text-align: center; font-family: 'Playfair Display', serif; }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-d));
+  color: var(--navy);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  margin-top: 6px;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,180,41,.3); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── WAITING ROOM ── */
+#waiting {
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  background: var(--felt-d);
+}
+.room-code-display {
+  text-align: center;
+}
+.room-code-display .label { font-size: .75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.room-code-display .code {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 10vw, 4rem);
+  color: var(--gold);
+  letter-spacing: 8px;
+  text-shadow: 0 2px 20px rgba(240,180,41,.3);
+}
+.room-code-display .share-hint { color: var(--muted); font-size: .8rem; margin-top: 8px; }
+.copy-code-btn {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: var(--txt);
+  font-family: 'Inter', sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.copy-code-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.players-list { width: 100%; max-width: 360px; }
+.players-list h3 { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: center; }
+.player-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,.05);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,.07);
+}
+.player-row .avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 700; font-size: .9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.player-row .pname { font-weight: 600; flex: 1; }
+.player-row .host-badge { font-size: .7rem; color: var(--gold); background: rgba(240,180,41,.1); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(240,180,41,.2); }
+.player-row.me { border-color: rgba(240,180,41,.2); }
+
+#btn-start-game { max-width: 360px; }
+.waiting-hint { color: var(--muted); font-size: .85rem; text-align: center; }
+
+/* ── GAME SCREEN ── */
+#game {
+  background: var(--felt);
+  padding: 8px;
+  gap: 8px;
+}
+
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(0,0,0,.25);
+  border-radius: 11px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.top-bar .game-brand { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
+.top-bar .turn-info { font-size: .8rem; color: var(--muted); text-align: center; flex: 1; }
+.top-bar .turn-info b { color: var(--gold); }
+.top-bar .code-badge { font-size: .7rem; color: var(--muted); background: rgba(255,255,255,.05); padding: 4px 10px; border-radius: 6px; letter-spacing: 1px; white-space: nowrap; }
+
+/* Opponents */
+.opponents { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; flex-shrink: 0; position: relative; z-index: 5; }
+.opp-card {
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  padding: 9px 12px;
+  flex: 1; min-width: 100px; max-width: 150px;
+  transition: border-color .3s, box-shadow .3s;
+}
+.opp-card.active-turn { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,180,41,.2); }
+.opp-card.busted { opacity: .4; }
+.opp-card.passed { opacity: .7; }
+.opp-card.targetable {
+  cursor: pointer;
+  border-color: rgba(240,180,41,.45);
+  box-shadow: 0 0 0 2px rgba(240,180,41,.2);
+}
+.opp-card.targetable:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(240,180,41,.35);
+}
+.opp-card .oname { font-size: .7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opp-card .ototalscore { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--gold); }
+.opp-card .oround { font-size: .65rem; color: var(--muted); }
+.opp-card .omini { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 5px; }
+.mini-c {
+  width: 20px; height: 27px; border-radius: 3px;
+  background: var(--card-bg); color: #222;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .55rem; font-weight: 700;
+  border: 1px solid rgba(0,0,0,.15);
+  flex-shrink: 0;
+}
+.mini-c.spc { background: #1a1a40; color: #9090ff; }
+.mini-c.bust-dup { background: #4a1f1f; color: #ffd1d1; border-color: #a34545; }
+.opp-status { font-size: .65rem; margin-top: 4px; font-weight: 700; }
+.opp-status.bust { color: var(--danger); }
+.opp-status.pass { color: var(--gold); }
+
+/* Table center */
+.table-center {
+  display: flex; align-items: center; justify-content: center;
+  gap: 36px; flex: 1; min-height: 140px;
+}
+
+.deck-zone { text-align: center; }
+.zone-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+.deck-count { font-size: .65rem; color: var(--muted); margin-top: 5px; }
+
+.card-pile {
+  position: relative;
+  width: var(--card-w); height: var(--card-h);
+  cursor: pointer; margin: 0 auto;
+}
+
+.playing-card {
+  position: absolute; inset: 0;
+  border-radius: 7px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  box-shadow: 0 3px 12px rgba(0,0,0,.45);
+  border: 2px solid rgba(0,0,0,.12);
+  transition: transform .15s;
+}
+.playing-card.face-down {
+  background: repeating-linear-gradient(45deg, #1a4a2e 0px, #1a4a2e 6px, #1e5234 6px, #1e5234 12px);
+  border: 2px solid #264d3d;
+}
+.playing-card .cv { font-size: 1.4rem; line-height: 1; color: #222; }
+.playing-card .cs { font-size: .55rem; color: var(--muted); margin-top: 2px; letter-spacing: .5px; }
+.playing-card.bonus-card.x2-card {
+  border-color: #d28b2a;
+  box-shadow: 0 0 0 2px rgba(240,180,41,.35), 0 3px 12px rgba(0,0,0,.45);
+}
+.playing-card.bonus-card.x2-card .cv { color: #ffd88a; font-size: 1.25rem; }
+
+.shadow1 { transform: translate(4px,4px); background: #1a3d2d; border: 2px solid #162e20; z-index: 0; }
+.shadow2 { transform: translate(2px,2px); background: #1e4532; border: 2px solid #18321f; z-index: 1; }
+.pile-top { z-index: 2; background: var(--card-bg); }
+
+.last-drawn-zone { text-align: center; }
+.empty-slot {
+  width: var(--card-w); height: var(--card-h);
+  border-radius: 7px;
+  border: 2px dashed rgba(255,255,255,.12);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.18); font-size: .65rem; margin: 0 auto;
+}
+
+.special-stage-zone { text-align: center; }
+#special-stage-display { min-width: var(--card-w); min-height: var(--card-h); }
+
+.special-target-panel {
+  display: none;
+  position: relative;
+  z-index: 70;
+  margin: 4px auto 0;
+  width: 100%;
+  max-width: 760px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.2);
+}
+
+.special-target-title {
+  text-align: center;
+  color: var(--gold);
+  font-size: .8rem;
+  margin-bottom: 8px;
+}
+
+.special-target-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.special-target-btn {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: var(--txt);
+  font-family: 'Inter', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.special-target-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* My hand */
+.my-area { flex-shrink: 0; }
+.my-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px; margin-bottom: 9px;
+}
+.my-name { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--gold); }
+.my-score { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--txt); text-align: right; }
+.my-score small { font-family: 'Inter', sans-serif; font-size: .65rem; color: var(--muted); display: block; }
+
+.hand {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+  min-height: calc(var(--card-h) + 16px);
+  padding: 8px;
+  background: rgba(0,0,0,.2);
+  border-radius: 13px;
+  border: 1px solid rgba(255,255,255,.06);
+  align-items: center;
+}
+.hand-empty { color: var(--muted); font-size: .85rem; }
+.hand-card {
+  width: var(--card-w); height: var(--card-h);
+  border-radius: 7px;
+  background: var(--card-bg);
+  border: 2px solid rgba(0,0,0,.12);
+  box-shadow: 0 3px 10px rgba(0,0,0,.4);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-weight: 700;
+}
+.hand-card .cv { font-size: 1.35rem; line-height: 1; color: #222; }
+.hand-card .cs { font-size: .55rem; color: var(--muted); margin-top: 2px; }
+.hand-card.bust-dup { background: linear-gradient(135deg,#3d1717,#5a2424); border-color: #8e3b3b; }
+.hand-card.bust-dup .cv { color: #ffd1d1; }
+.hand-card.bust-dup .cs { color: #ffb9b9; }
+.hand-card.bonus-card { background: linear-gradient(135deg,#251840,#3d2065); }
+.hand-card.bonus-card .cv { color: #c0a0ff; font-size: 1.1rem; }
+.hand-card.bonus-card.x2-card {
+  background: linear-gradient(135deg,#5b2a00,#8a3f00);
+  border-color: #d28b2a;
+}
+.hand-card.bonus-card.x2-card .cv { color: #ffd88a; font-size: 1.2rem; }
+.hand-card.special-card { background: linear-gradient(135deg,#142840,#1a4060); }
+.hand-card.special-card .cv { color: #80c0ff; font-size: .85rem; text-align: center; line-height: 1.3; }
+
+.draw-fly-card {
+  position: fixed;
+  width: var(--card-w);
+  height: var(--card-h);
+  pointer-events: none;
+  z-index: 300;
+  perspective: 700px;
+}
+
+.draw-hit {
+  box-shadow: 0 0 0 2px rgba(240,180,41,.55), 0 0 18px rgba(240,180,41,.35);
+  transition: box-shadow .25s ease;
+}
+
+/* Message */
+#msg { text-align: center; min-height: 22px; font-size: .85rem; color: var(--gold); font-weight: 500; flex-shrink: 0; padding: 0 8px; }
+
+/* Actions */
+.actions { display: flex; gap: 10px; justify-content: center; flex-shrink: 0; flex-wrap: wrap; padding: 0 4px; position: relative; z-index: 80; }
+.actions button {
+  padding: 12px 22px; border-radius: 9px; border: none;
+  font-size: .9rem; font-weight: 600; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: all .15s;
+}
+.actions button:disabled { cursor: not-allowed; }
+.actions button:not(:disabled) { cursor: pointer; pointer-events: auto; }
+#btn-draw {
+  background: linear-gradient(135deg, var(--gold), var(--gold-d));
+  color: var(--navy); min-width: 150px;
+}
+#btn-draw:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(240,180,41,.3); }
+#btn-draw:disabled { opacity: .4; cursor: not-allowed; }
+#btn-pass {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--muted);
+}
+#btn-pass:hover:not(:disabled) { border-color: rgba(255,255,255,.35); color: var(--txt); }
+#btn-pass:disabled { opacity: .4; cursor: not-allowed; }
+#btn-next-round {
+  background: linear-gradient(135deg, #2e7d52, #1a5c38);
+  color: var(--txt); display: none;
+  cursor: pointer;
+}
+#btn-next-round:hover { transform: translateY(-1px); }
+#btn-next-round:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+#btn-end-game {
+  background: linear-gradient(135deg, #8a2f2f, #612020);
+  color: var(--txt);
+  display: none;
+}
+
+#btn-close-lobby {
+  background: linear-gradient(135deg, #8a2f2f, #612020);
+  color: var(--txt);
+  display: none;
+  max-width: 360px;
+}
+
+/* Chat sidebar / log */
+.chat-log {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 220px;
+  background: rgba(10,20,14,.92);
+  border-left: 1px solid rgba(255,255,255,.07);
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .25s;
+  z-index: 50;
+}
+.chat-log.open { transform: translateX(0); }
+.chat-log h3 { padding: 14px 16px; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.chat-msg { font-size: .78rem; color: var(--muted); line-height: 1.4; padding: 6px 8px; background: rgba(255,255,255,.04); border-radius: 6px; }
+.chat-msg.event { color: var(--gold); }
+#btn-chat-toggle {
+  position: fixed; right: 12px; top: 12px;
+  background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.12);
+  color: var(--muted); padding: 7px 12px; border-radius: 8px;
+  cursor: pointer; font-size: .75rem; font-family: 'Inter', sans-serif;
+  z-index: 60;
+}
+#btn-chat-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── WINNER SCREEN ── */
+#winner {
+  align-items: center; justify-content: center; gap: 24px;
+  background: var(--felt-d);
+  padding: 24px;
+}
+.winner-box {
+  text-align: center; padding: 36px;
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(240,180,41,.25);
+  border-radius: 22px; max-width: 380px; width: 100%;
+}
+.winner-trophy { font-size: 3.5rem; margin-bottom: 10px; }
+.winner-box h2 { font-family: 'Playfair Display', serif; color: var(--muted); font-size: .9rem; text-transform: uppercase; letter-spacing: 2px; }
+.winner-box h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--gold); margin: 8px 0 4px; }
+.winner-box .wscore { color: var(--muted); font-size: 1rem; }
+.scores { width: 100%; max-width: 380px; }
+.scores h3 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 12px; text-align: center; font-size: 1.1rem; }
+.score-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(255,255,255,.04); border-radius: 8px; margin-bottom: 6px; }
+.score-row.top { background: rgba(240,180,41,.1); border: 1px solid rgba(240,180,41,.18); }
+.score-row .rank { color: var(--muted); font-size: .8rem; min-width: 24px; }
+.score-row .sname { flex: 1; font-weight: 600; padding: 0 12px; }
+.score-row .sval { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.1rem; }
+.win-btns { display: flex; gap: 12px; width: 100%; max-width: 380px; flex-wrap: wrap; }
+.btn-sec { flex: 1; min-width: 130px; padding: 13px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: var(--txt); border-radius: 9px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: .9rem; }
+.btn-sec:hover { border-color: rgba(255,255,255,.35); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(10,20,14,.95); border: 1px solid rgba(240,180,41,.3);
+  color: var(--gold); padding: 12px 22px; border-radius: 10px;
+  font-size: .9rem; font-weight: 500; white-space: nowrap;
+  transition: opacity .2s; opacity: 0; z-index: 200;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Connection badge */
+.conn-badge {
+  position: fixed; bottom: 12px; right: 12px;
+  font-size: .7rem; padding: 5px 10px; border-radius: 20px;
+  font-weight: 600; z-index: 100;
+}
+.conn-badge.connected { background: rgba(30,140,70,.2); border: 1px solid rgba(30,140,70,.4); color: #5ddd8a; }
+.conn-badge.disconnected { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: var(--danger); }
+
+/* Responsive */
+@media (max-width: 580px) {
+  :root { --card-w: 50px; --card-h: 70px; }
+  .table-center { gap: 22px; }
+  .opp-card { min-width: 88px; padding: 7px 9px; }
+  #btn-draw { min-width: 120px; padding: 11px 14px; }
+  .chat-log { width: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOBBY ══ -->
+<div id="lobby" class="screen active">
+  <div class="logo">
+    <h1>FLIP 7</h1>
+    <p>The card game of nerve &amp; numbers</p>
+  </div>
+  <div class="panel">
+    <div class="tabs">
+      <button class="tab active" id="tab-create" onclick="switchTab('create')">Create Room</button>
+      <button class="tab" id="tab-join" onclick="switchTab('join')">Join Room</button>
+    </div>
+    <div id="pane-create">
+      <div class="field"><label>Your Name</label><input id="create-name" placeholder="Enter your name" maxlength="20" /></div>
+      <button class="btn-primary" onclick="createRoom()">Create Room</button>
+    </div>
+    <div id="pane-join" style="display:none">
+      <div class="field"><label>Your Name</label><input id="join-name" placeholder="Enter your name" maxlength="20" /></div>
+      <div class="field"><label>Room Code</label><input id="join-code" class="code-input" placeholder="XXXXX" maxlength="5" /></div>
+      <button class="btn-primary" onclick="joinRoom()">Join Room</button>
+    </div>
+  </div>
+  <p style="color:var(--muted);font-size:.75rem;text-align:center">1–8 players · First to 200 points wins</p>
+</div>
+
+<!-- ══ WAITING ROOM ══ -->
+<div id="waiting" class="screen">
+  <div class="room-code-display">
+    <div class="label">Room Code — share with friends</div>
+    <div class="code" id="display-code">—</div>
+    <button class="copy-code-btn" id="btn-copy-code" onclick="copyRoomCode()">Copy Code</button>
+    <div class="share-hint">Anyone on any network can join with this code</div>
+  </div>
+  <div class="players-list">
+    <h3>Players <span id="player-count-badge"></span></h3>
+    <div id="waiting-players"></div>
+  </div>
+  <button class="btn-primary" id="btn-start-game" onclick="startGame()" style="display:none">Start Game</button>
+  <button class="btn-primary" id="btn-close-lobby" onclick="closeLobby()">Close Lobby</button>
+  <p class="waiting-hint" id="waiting-hint">Waiting for host to start…</p>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <span class="game-brand">FLIP 7</span>
+    <span class="turn-info" id="turn-info">Loading…</span>
+    <span class="code-badge" id="game-code-badge"></span>
+  </div>
+
+  <div class="opponents" id="opponents"></div>
+
+  <div class="table-center">
+    <div class="deck-zone">
+      <div class="zone-label">Draw Pile</div>
+      <div class="card-pile" id="deck-pile" onclick="drawCard()">
+        <div class="playing-card face-down shadow1"></div>
+        <div class="playing-card face-down shadow2"></div>
+        <div class="playing-card face-down pile-top"></div>
+      </div>
+      <div class="deck-count" id="deck-count"></div>
+    </div>
+
+    <div class="last-drawn-zone">
+      <div class="zone-label">Last Drawn</div>
+      <div id="last-drawn-display"><div class="empty-slot">—</div></div>
+    </div>
+
+    <div class="special-stage-zone">
+      <div class="zone-label">Special Card</div>
+      <div id="special-stage-display"><div class="empty-slot">—</div></div>
+    </div>
+  </div>
+
+  <div class="my-area">
+    <div class="my-header">
+      <span class="my-name" id="my-name-label">You</span>
+      <div class="my-score"><span id="my-total">0</span><small id="my-round-label">0 this round</small></div>
+    </div>
+    <div class="hand" id="my-hand"><span class="hand-empty">No cards yet</span></div>
+  </div>
+
+  <div id="msg"></div>
+
+  <div class="special-target-panel" id="special-target-panel">
+    <div class="special-target-title" id="special-target-title">Choose a target</div>
+    <div class="special-target-buttons" id="special-target-buttons"></div>
+  </div>
+
+  <div class="actions">
+    <button id="btn-draw" onclick="drawCard()" disabled>🃏 Draw Card</button>
+    <button id="btn-pass" onclick="passCard()" disabled>✓ Lock In</button>
+    <button id="btn-next-round" onclick="nextRound()">▶ Next Round</button>
+    <button id="btn-end-game" onclick="endGame()">⛔ End Game</button>
+  </div>
+</div>
+
+<!-- ══ WINNER SCREEN ══ -->
+<div id="winner" class="screen">
+  <div class="winner-box">
+    <div class="winner-trophy">🏆</div>
+    <h2>Winner!</h2>
+    <h1 id="winner-name"></h1>
+    <p class="wscore" id="winner-score"></p>
+  </div>
+  <div class="scores">
+    <h3>Final Scores</h3>
+    <div id="final-scores"></div>
+  </div>
+  <div class="win-btns">
+    <button class="btn-sec" onclick="playAgain()">Play Again</button>
+    <button class="btn-sec" onclick="goHome()">Home</button>
+  </div>
+</div>
+
+<!-- Chat log toggle -->
+<button id="btn-chat-toggle" onclick="toggleChat()">💬 Log</button>
+<div class="chat-log" id="chat-log">
+  <h3>Game Log</h3>
+  <div class="chat-messages" id="chat-messages"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Connection badge -->
+<div class="conn-badge disconnected" id="conn-badge">● Connecting</div>
+
+<script>
+// ════════════════════════════════════════
+//  Flip 7 — WebSocket Client
+// ════════════════════════════════════════
+
+const WS_URL = `ws://${location.host}`;
+
+let ws = null;
+let myId = localStorage.getItem('flip7_id') || null;
+let myRoomCode = null;
+let reconnectTimer = null;
+let pingTimer = null;
+let chatOpen = false;
+let lastState = null;
+let lastSeenDrawSeq = null;
+let lastSeenSpecialChoiceSeq = null;
+let stagedSpecialCard = null;
+let specialStageReady = true;
+let activeSpecialType = null;
+let audioCtx = null;
+let drawSoundIndex = 0;
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+
+function saveSession(roomCode, playerId) {
+  localStorage.setItem('flip7_id', playerId);
+  localStorage.setItem('flip7_room', roomCode);
+}
+function clearSession() {
+  localStorage.removeItem('flip7_room');
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+
+function connect(onOpen) {
+  if (ws && ws.readyState <= 1) {
+    if (onOpen) onOpen();
+    return;
+  }
+
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    setBadge(true);
+    clearInterval(reconnectTimer);
+    startPing();
+    if (onOpen) onOpen();
+  };
+
+  ws.onmessage = (e) => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+    handleMessage(msg);
+  };
+
+  ws.onclose = () => {
+    setBadge(false);
+    stopPing();
+    reconnectTimer = setTimeout(() => connect(), 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function send(msg) {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ ...msg, roomCode: myRoomCode, playerId: myId }));
+  }
+}
+
+function startPing() {
+  pingTimer = setInterval(() => send({ type: 'ping' }), 20000);
+}
+function stopPing() { clearInterval(pingTimer); }
+
+function setBadge(ok) {
+  const b = document.getElementById('conn-badge');
+  b.textContent = ok ? '● Connected' : '● Reconnecting…';
+  b.className = 'conn-badge ' + (ok ? 'connected' : 'disconnected');
+}
+
+// ── Message handling ──────────────────────────────────────────────────────────
+
+function handleMessage(msg) {
+  if (msg.type === 'joined') {
+    myId = msg.playerId;
+    myRoomCode = msg.roomCode;
+    saveSession(msg.roomCode, msg.playerId);
+    document.getElementById('display-code').textContent = msg.roomCode;
+    document.getElementById('game-code-badge').textContent = msg.roomCode;
+    showScreen('waiting');
+  }
+  else if (msg.type === 'state') {
+    lastState = msg.room;
+    renderState(msg.room);
+  }
+  else if (msg.type === 'chat') {
+    addChatMsg(msg.message, true);
+  }
+  else if (msg.type === 'error') {
+    showToast('⚠ ' + msg.message);
+  }
+  else if (msg.type === 'roomClosed') {
+    showToast(msg.message || 'Lobby closed');
+    goHome();
+  }
+  else if (msg.type === 'pong') {
+    // alive
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+
+function createRoom() {
+  const name = document.getElementById('create-name').value.trim();
+  if (!name) { showToast('Enter your name'); return; }
+  connect(() => {
+    if (!myId) myId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    send({ type: 'create', playerName: name });
+  });
+}
+
+function joinRoom() {
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!name) { showToast('Enter your name'); return; }
+  if (code.length < 4) { showToast('Enter the room code'); return; }
+  connect(() => {
+    if (!myId) myId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    myRoomCode = code;
+    send({ type: 'join', playerName: name });
+  });
+}
+
+function startGame() { send({ type: 'start' }); }
+function drawCard()   { send({ type: 'draw' }); }
+function passCard()   { send({ type: 'pass' }); }
+function nextRound()  {
+  if (!lastState) return;
+  const me = lastState.players.find(p => p.id === myId);
+  if (!me || !me.isHost) { showToast('Only host can start next round'); return; }
+  if (lastState.phase !== 'roundEnd') { showToast('Round is not over yet'); return; }
+  send({ type: 'nextRound' });
+  showToast('Starting next round…');
+}
+function endGame() {
+  if (!lastState) return;
+  const me = lastState.players.find(p => p.id === myId);
+  if (!me || !me.isHost) { showToast('Only host can end game'); return; }
+  send({ type: 'endGame' });
+}
+function closeLobby() {
+  if (!lastState) return;
+  const me = lastState.players.find(p => p.id === myId);
+  if (!me || !me.isHost) { showToast('Only host can close lobby'); return; }
+  send({ type: 'closeLobby' });
+}
+
+async function copyRoomCode() {
+  const code = (myRoomCode || '').trim();
+  if (!code) {
+    showToast('No room code to copy');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(code);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    showToast(`Copied room code: ${code}`);
+  } catch {
+    showToast('Could not copy code. Copy it manually.');
+  }
+}
+function chooseFreezeTarget(targetPlayerId) { send({ type: 'chooseFreezeTarget', targetPlayerId }); }
+function chooseFlip3Target(targetPlayerId) { send({ type: 'chooseFlip3Target', targetPlayerId }); }
+
+function playAgain() {
+  if (!lastState) return goHome();
+  // Rejoin as new game — host starts new game via nextRound if still in roundEnd
+  // or just go home and recreate
+  goHome();
+}
+
+function goHome() {
+  clearSession();
+  myRoomCode = null;
+  lastState = null;
+  showScreen('lobby');
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function renderState(room) {
+  const myPlayer = room.players.find(p => p.id === myId);
+  if (!myPlayer) return;
+
+  if (room.phase === 'lobby') {
+    showScreen('waiting');
+    renderWaiting(room, myPlayer);
+    return;
+  }
+
+  if (room.phase === 'gameOver') {
+    renderGame(room, myPlayer);
+    renderWinner(room);
+    showScreen('winner');
+    return;
+  }
+
+  showScreen('game');
+  renderGame(room, myPlayer);
+}
+
+function renderWaiting(room, myPlayer) {
+  document.getElementById('display-code').textContent = room.roomCode;
+
+  const list = document.getElementById('waiting-players');
+  list.innerHTML = '';
+  room.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-row' + (p.id === myId ? ' me' : '');
+    const initials = p.name.slice(0,2).toUpperCase();
+    row.innerHTML = `
+      <div class="avatar">${initials}</div>
+      <span class="pname">${esc(p.name)}${p.id === myId ? ' (you)' : ''}</span>
+      ${p.isHost ? '<span class="host-badge">Host</span>' : ''}
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('player-count-badge').textContent = `(${room.players.length}/8)`;
+
+  const isHost = myPlayer.isHost;
+  const startBtn = document.getElementById('btn-start-game');
+  const closeBtn = document.getElementById('btn-close-lobby');
+  startBtn.style.display = isHost ? 'block' : 'none';
+  closeBtn.style.display = isHost ? 'block' : 'none';
+  document.getElementById('waiting-hint').textContent = isHost
+    ? (room.players.length < 2 ? 'Share the code — you can play solo too!' : 'All players joined? Hit Start!')
+    : 'Waiting for host to start…';
+}
+
+function renderGame(room, myPlayer) {
+  const prevDrawSeq = lastSeenDrawSeq;
+  const prevSpecialChoiceSeq = lastSeenSpecialChoiceSeq;
+  if (typeof room.lastDrawSeq === 'number') {
+    lastSeenDrawSeq = room.lastDrawSeq;
+  }
+  if (typeof room.lastSpecialChoiceSeq === 'number') {
+    lastSeenSpecialChoiceSeq = room.lastSpecialChoiceSeq;
+  }
+
+  const isMyTurn = room.players[room.currentTurn]?.id === myId;
+  const curPlayer = room.players[room.currentTurn];
+  const freezeChoicePending = room.pendingFreezeChooserId === myId;
+  const flip3ChoicePending = room.pendingFlip3ChooserId === myId;
+  const specialChoicePending = freezeChoicePending || flip3ChoicePending;
+
+  // Top bar
+  document.getElementById('turn-info').innerHTML = isMyTurn
+    ? `<b>Your turn</b> · Round ${room.round}`
+    : `<b>${esc(curPlayer?.name || '?')}'s turn</b> · Round ${room.round}`;
+  document.getElementById('game-code-badge').textContent = room.roomCode;
+
+  // Message
+  document.getElementById('msg').textContent = room.lastMessage || '';
+
+  // Deck
+  document.getElementById('deck-count').textContent = `${room.deck} cards left`;
+
+  // Last drawn
+  const ld = room.lastDrawn;
+  document.getElementById('last-drawn-display').innerHTML = ld ? buildCardHTML(ld, true) : '<div class="empty-slot">—</div>';
+
+  // Opponents
+  const oppDiv = document.getElementById('opponents');
+  oppDiv.innerHTML = '';
+  room.players.forEach((p, i) => {
+    if (p.id === myId) return;
+    const isActive = i === room.currentTurn;
+    const roundScore = handScore(p);
+    const div = document.createElement('div');
+    div.dataset.playerId = p.id;
+    div.className = 'opp-card' + (isActive ? ' active-turn' : '') + (p.busted ? ' busted' : '') + (p.passed ? ' passed' : '');
+    if (specialChoicePending && !p.passed && !p.busted) {
+      div.classList.add('targetable');
+    }
+    const miniCards = (p.hand || []).map(c => {
+      const style = c.bustDuplicate ? '' : ` style="${numberCardStyle(c)}"`;
+      return `<div class="mini-c${c.bustDuplicate ? ' bust-dup' : ''}"${style}>${c.value}</div>`;
+    }).join('');
+    const miniBonusCards = (p.bonusCards || []).map(c => {
+      const label = esc(c.value || ('+' + (c.points || 0)));
+      return `<div class="mini-c spc">${label}</div>`;
+    }).join('');
+    const uncardedBonus = Math.max(0, (p.bonusPoints || 0) - bonusCardPoints(p));
+    const bonusMini = uncardedBonus > 0 ? `<div class="mini-c spc">+${uncardedBonus}</div>` : '';
+    const multMini = (p.roundMultiplier || 1) > 1 ? `<div class="mini-c spc">x${p.roundMultiplier}</div>` : '';
+    const scMini = p.hasSecondChance ? `<div class="mini-c spc">🛡</div>` : '';
+    let statusHtml = '';
+    if (p.busted) statusHtml = '<div class="opp-status bust">💥 Busted</div>';
+    else if (p.passed) statusHtml = `<div class="opp-status pass">✓ ${roundScore}pts</div>`;
+    div.innerHTML = `
+      <div class="oname">${esc(p.name)}</div>
+      <div class="ototalscore">${p.totalScore}<span style="font-size:.6rem;color:var(--muted);font-family:Inter"> total</span></div>
+      <div class="omini">${miniCards}${miniBonusCards}${bonusMini}${multMini}${scMini}</div>
+      ${statusHtml}
+    `;
+    oppDiv.appendChild(div);
+  });
+
+  // My hand
+  const hand = document.getElementById('my-hand');
+  hand.innerHTML = '';
+  const myUncardedBonus = Math.max(0, (myPlayer.bonusPoints || 0) - bonusCardPoints(myPlayer));
+  const hasAnyCards =
+    (myPlayer.hand && myPlayer.hand.length > 0) ||
+    ((myPlayer.bonusCards || []).length > 0) ||
+    myUncardedBonus > 0 ||
+    (myPlayer.roundMultiplier || 1) > 1 ||
+    myPlayer.hasSecondChance;
+
+  if (!hasAnyCards) {
+    hand.innerHTML = '<span class="hand-empty">No cards yet</span>';
+  } else {
+    (myPlayer.hand || []).forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'hand-card' + (c.bustDuplicate ? ' bust-dup' : '');
+      if (!c.bustDuplicate) {
+        el.style.cssText = numberCardStyle(c);
+      }
+      el.innerHTML = `<div class="cv">${c.value}</div><div class="cs">pts</div>`;
+      hand.appendChild(el);
+    });
+
+    (myPlayer.bonusCards || []).forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'hand-card bonus-card';
+      el.innerHTML = `<div class="cv">${esc(c.value || ('+' + (c.points || 0)))}</div><div class="cs">bonus</div>`;
+      hand.appendChild(el);
+    });
+
+    if (myUncardedBonus > 0) {
+      const el = document.createElement('div');
+      el.className = 'hand-card bonus-card';
+      el.innerHTML = `<div class="cv">+${myUncardedBonus}</div><div class="cs">bonus</div>`;
+      hand.appendChild(el);
+    }
+
+    if ((myPlayer.roundMultiplier || 1) > 1) {
+      const el = document.createElement('div');
+      el.className = 'hand-card bonus-card x2-card';
+      el.innerHTML = `<div class="cv">x${myPlayer.roundMultiplier}</div><div class="cs">all points</div>`;
+      hand.appendChild(el);
+    }
+    if (myPlayer.hasSecondChance) {
+      const el = document.createElement('div');
+      el.className = 'hand-card special-card';
+      el.innerHTML = `<div class="cv">🛡️</div><div class="cs">safe</div>`;
+      hand.appendChild(el);
+    }
+  }
+
+  const roundPts = handScore(myPlayer);
+  document.getElementById('my-name-label').textContent = myPlayer.name + (myPlayer.hasSecondChance ? ' 🛡️' : '');
+  document.getElementById('my-total').textContent = myPlayer.totalScore;
+  document.getElementById('my-round-label').textContent = `${roundPts} this round`;
+
+  // Buttons
+  const canAct = isMyTurn && !myPlayer.passed && !myPlayer.busted && room.phase === 'playing' && !specialChoicePending;
+  document.getElementById('btn-draw').disabled = !canAct;
+  document.getElementById('btn-pass').disabled = !canAct || room.flip3Pending > 0;
+
+  const promptType = freezeChoicePending ? 'freeze' : (flip3ChoicePending ? 'flip3' : null);
+  activeSpecialType = promptType;
+  renderSpecialTargetPanel(room, promptType, specialChoicePending);
+
+  // Next round button (host only)
+  const nextRoundBtn = document.getElementById('btn-next-round');
+  const endGameBtn = document.getElementById('btn-end-game');
+  if (room.phase === 'roundEnd' && myPlayer.isHost) {
+    nextRoundBtn.style.display = 'block';
+    nextRoundBtn.disabled = false;
+    nextRoundBtn.removeAttribute('disabled');
+    endGameBtn.style.display = 'block';
+    endGameBtn.disabled = false;
+    document.getElementById('btn-draw').disabled = true;
+    document.getElementById('btn-pass').disabled = true;
+  } else {
+    nextRoundBtn.style.display = 'none';
+    nextRoundBtn.disabled = true;
+    endGameBtn.style.display = myPlayer.isHost ? 'block' : 'none';
+    endGameBtn.disabled = !myPlayer.isHost;
+  }
+
+  if (room.lastDrawn && typeof room.lastDrawSeq === 'number' && prevDrawSeq !== null && room.lastDrawSeq !== prevDrawSeq) {
+    playSoundForDraw(room);
+    if (room.lastDrawn.type === 'special') {
+      animateSpecialToStage(room.lastDrawn);
+    } else {
+      animateDrawToPlayer(room.lastDrawn, room.lastDrawerId);
+    }
+  }
+
+  if (
+    typeof room.lastSpecialChoiceSeq === 'number' &&
+    room.lastSpecialChoiceSeq !== prevSpecialChoiceSeq &&
+    room.lastSpecialChoiceTargetId
+  ) {
+    const chosenCard = room.lastSpecialChoiceCard
+      ? { type: 'special', value: room.lastSpecialChoiceCard }
+      : stagedSpecialCard;
+    animateSpecialFromStageToPlayer(chosenCard, room.lastSpecialChoiceTargetId);
+  }
+
+}
+
+function renderWinner(room) {
+  const sorted = [...room.players].sort((a, b) => b.totalScore - a.totalScore);
+  const winner = sorted[0];
+  document.getElementById('winner-name').textContent = winner.name;
+  document.getElementById('winner-score').textContent = `${winner.totalScore} points`;
+  const list = document.getElementById('final-scores');
+  list.innerHTML = '';
+  sorted.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'score-row' + (i === 0 ? ' top' : '');
+    row.innerHTML = `<span class="rank">#${i+1}</span><span class="sname">${esc(p.name)}</span><span class="sval">${p.totalScore}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function buildCardHTML(card, large = false) {
+  const cls = large ? 'playing-card' : 'hand-card';
+  const wrap = (inner) => large
+    ? `<div style="position:relative;width:var(--card-w);height:var(--card-h);margin:0 auto;">${inner}</div>`
+    : inner;
+
+  if (card.type === 'number') {
+    const style = ` style="${numberCardStyle(card)}"`;
+    return wrap(`<div class="${cls}"${style}><div class="cv">${card.value}</div><div class="cs">pts</div></div>`);
+  } else if (card.type === 'bonus') {
+    const x2Class = card.value === 'x2' ? ' x2-card' : '';
+    return wrap(`<div class="${cls} bonus-card${x2Class}"><div class="cv">${card.value}</div><div class="cs">bonus</div></div>`);
+  } else {
+    const icons = { Freeze: '🧊 Freeze', Flip3: '🔄 Flip 3', '2ndChance': '🛡 2nd Chance' };
+    return wrap(`<div class="${cls} special-card"><div class="cv">${icons[card.value] || card.value}</div></div>`);
+  }
+}
+
+function handScore(player) {
+  const base = (player.hand || []).reduce((s, c) => s + c.value, 0) + (player.bonusPoints || 0);
+  return base * (player.roundMultiplier || 1);
+}
+
+function numberCardColor(cardOrValue) {
+  const palette = {
+    0: '#909090',
+    1: '#f94144',
+    2: '#f3722c',
+    3: '#f8961e',
+    4: '#f9c74f',
+    5: '#90be6d',
+    6: '#43aa8b',
+    7: '#4d908e',
+    8: '#577590',
+    9: '#277da1',
+    10: '#8e44ad',
+    11: '#ff6b6b',
+    12: '#00b4d8',
+  };
+
+  if (cardOrValue && typeof cardOrValue === 'object') {
+    if (cardOrValue.color) return cardOrValue.color;
+    return palette[Number(cardOrValue.value)] || '#f3f1df';
+  }
+  return palette[Number(cardOrValue)] || '#f3f1df';
+}
+
+function numberCardStyle(cardOrValue) {
+  const bg = numberCardColor(cardOrValue);
+  return `background:${bg};color:#111;border-color:rgba(0,0,0,.25);`;
+}
+
+function bonusCardPoints(player) {
+  return (player.bonusCards || []).reduce((s, c) => s + (c.points || 0), 0);
+}
+
+function getDrawTargetElement(playerId) {
+  if (!playerId) return null;
+  if (playerId === myId) return document.getElementById('my-hand');
+  const cards = document.querySelectorAll('.opp-card');
+  for (const card of cards) {
+    if (card.dataset.playerId === playerId) {
+      return card;
+    }
+  }
+  return null;
+}
+
+function animateDrawToPlayer(card, playerId) {
+  const deck = document.getElementById('deck-pile');
+  const target = getDrawTargetElement(playerId);
+  if (!deck || !target || !card) return;
+
+  const deckRect = deck.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const startX = deckRect.left + deckRect.width / 2;
+  const startY = deckRect.top + deckRect.height / 2;
+  const endX = targetRect.left + targetRect.width / 2;
+  const endY = targetRect.top + targetRect.height / 2;
+
+  const fly = document.createElement('div');
+  fly.className = 'draw-fly-card';
+  fly.style.left = `${startX - deckRect.width / 2}px`;
+  fly.style.top = `${startY - deckRect.height / 2}px`;
+  fly.innerHTML = buildCardHTML(card, false);
+  document.body.appendChild(fly);
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const anim = fly.animate([
+    { transform: 'translate(0, 0) rotateY(0deg) scale(0.92)', opacity: 0.9 },
+    { transform: `translate(${dx * 0.5}px, ${dy * 0.5}px) rotateY(90deg) scale(1.05)`, opacity: 1 },
+    { transform: `translate(${dx}px, ${dy}px) rotateY(180deg) scale(1)`, opacity: 0.05 },
+  ], {
+    duration: 520,
+    easing: 'cubic-bezier(0.2, 0.75, 0.2, 1)',
+    fill: 'forwards',
+  });
+
+  anim.onfinish = () => {
+    fly.remove();
+    target.classList.add('draw-hit');
+    setTimeout(() => target.classList.remove('draw-hit'), 240);
+  };
+}
+
+function setSpecialStageCard(card) {
+  const stage = document.getElementById('special-stage-display');
+  if (!stage) return;
+  if (!card) {
+    stage.innerHTML = '<div class="empty-slot">—</div>';
+    stagedSpecialCard = null;
+    specialStageReady = true;
+    return;
+  }
+  stage.innerHTML = buildCardHTML(card, false);
+  stagedSpecialCard = card;
+  specialStageReady = true;
+}
+
+function animateSpecialToStage(card) {
+  const deck = document.getElementById('deck-pile');
+  const stage = document.getElementById('special-stage-display');
+  if (!deck || !stage || !card) return;
+
+  const deckRect = deck.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+  const startX = deckRect.left + deckRect.width / 2;
+  const startY = deckRect.top + deckRect.height / 2;
+  const endX = stageRect.left + stageRect.width / 2;
+  const endY = stageRect.top + stageRect.height / 2;
+
+  const fly = document.createElement('div');
+  fly.className = 'draw-fly-card';
+  fly.style.left = `${startX - deckRect.width / 2}px`;
+  fly.style.top = `${startY - deckRect.height / 2}px`;
+  fly.innerHTML = buildCardHTML(card, false);
+  document.body.appendChild(fly);
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  specialStageReady = false;
+  const anim = fly.animate([
+    { transform: 'translate(0, 0) rotateY(0deg) scale(0.92)', opacity: 0.9 },
+    { transform: `translate(${dx * 0.55}px, ${dy * 0.55}px) rotateY(95deg) scale(1.08)`, opacity: 1 },
+    { transform: `translate(${dx}px, ${dy}px) rotateY(180deg) scale(1)`, opacity: 0.1 },
+  ], {
+    duration: 520,
+    easing: 'cubic-bezier(0.2, 0.75, 0.2, 1)',
+    fill: 'forwards',
+  });
+
+  anim.onfinish = () => {
+    fly.remove();
+    setSpecialStageCard(card);
+    stage.classList.add('draw-hit');
+    setTimeout(() => stage.classList.remove('draw-hit'), 240);
+  };
+}
+
+function animateSpecialFromStageToPlayer(card, targetPlayerId) {
+  const stage = document.getElementById('special-stage-display');
+  const target = getDrawTargetElement(targetPlayerId);
+  const moveCard = card || stagedSpecialCard;
+  if (!stage || !target || !moveCard) {
+    // Never leave stale special cards in staging if we miss an animation edge-case.
+    setSpecialStageCard(null);
+    return;
+  }
+
+  const stageRect = stage.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const startX = stageRect.left + stageRect.width / 2;
+  const startY = stageRect.top + stageRect.height / 2;
+  const endX = targetRect.left + targetRect.width / 2;
+  const endY = targetRect.top + targetRect.height / 2;
+
+  const fly = document.createElement('div');
+  fly.className = 'draw-fly-card';
+  fly.style.left = `${startX - stageRect.width / 2}px`;
+  fly.style.top = `${startY - stageRect.height / 2}px`;
+  fly.innerHTML = buildCardHTML(moveCard, false);
+  document.body.appendChild(fly);
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const anim = fly.animate([
+    { transform: 'translate(0, 0) rotateY(180deg) scale(1)', opacity: 0.95 },
+    { transform: `translate(${dx * 0.5}px, ${dy * 0.5}px) rotateY(90deg) scale(1.05)`, opacity: 1 },
+    { transform: `translate(${dx}px, ${dy}px) rotateY(0deg) scale(1)`, opacity: 0.08 },
+  ], {
+    duration: 500,
+    easing: 'cubic-bezier(0.2, 0.75, 0.2, 1)',
+    fill: 'forwards',
+  });
+
+  anim.onfinish = () => {
+    fly.remove();
+    setSpecialStageCard(null);
+    target.classList.add('draw-hit');
+    setTimeout(() => target.classList.remove('draw-hit'), 240);
+  };
+}
+
+function renderSpecialTargetPanel(room, specialType, isPending) {
+  const panel = document.getElementById('special-target-panel');
+  const title = document.getElementById('special-target-title');
+  const buttons = document.getElementById('special-target-buttons');
+  if (!panel || !title || !buttons) return;
+
+  if (!isPending || !specialType) {
+    panel.style.display = 'none';
+    buttons.innerHTML = '';
+    return;
+  }
+
+  panel.style.display = 'block';
+
+  if (!specialStageReady) {
+    title.textContent = 'Dealing special card...';
+    buttons.innerHTML = '';
+    return;
+  }
+
+  title.textContent = specialType === 'freeze'
+    ? 'Choose who to Freeze'
+    : 'Choose who gets Flip 3';
+
+  const targets = room.players.filter(p => !p.passed && !p.busted);
+  const me = targets.find(p => p.id === myId);
+  const others = targets.filter(p => p.id !== myId);
+
+  buttons.innerHTML = '';
+
+  if (me) {
+    const selfBtn = document.createElement('button');
+    selfBtn.className = 'special-target-btn';
+    selfBtn.textContent = 'Myself';
+    selfBtn.onclick = () => {
+      if (!specialStageReady) {
+        showToast('Wait for the card animation to finish');
+        return;
+      }
+      if (specialType === 'freeze') chooseFreezeTarget(me.id);
+      else chooseFlip3Target(me.id);
+    };
+    buttons.appendChild(selfBtn);
+  }
+
+  others.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'special-target-btn';
+    btn.textContent = p.name;
+    btn.onclick = () => {
+      if (!specialStageReady) {
+        showToast('Wait for the card animation to finish');
+        return;
+      }
+      if (specialType === 'freeze') chooseFreezeTarget(p.id);
+      else chooseFlip3Target(p.id);
+    };
+    buttons.appendChild(btn);
+  });
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(tab) {
+  document.getElementById('pane-create').style.display = tab === 'create' ? '' : 'none';
+  document.getElementById('pane-join').style.display   = tab === 'join'   ? '' : 'none';
+  document.getElementById('tab-create').classList.toggle('active', tab === 'create');
+  document.getElementById('tab-join').classList.toggle('active', tab === 'join');
+}
+
+function addChatMsg(text, isEvent) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (isEvent ? ' event' : '');
+  div.textContent = text;
+  const msgs = document.getElementById('chat-messages');
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-log').classList.toggle('open', chatOpen);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Sound effects ────────────────────────────────────────────────────────────
+
+function ensureAudio() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!audioCtx) audioCtx = new Ctx();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function playTone(at, freq, duration, opts = {}) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  const type = opts.type || 'triangle';
+  const vol = opts.volume == null ? 0.06 : opts.volume;
+  const attack = opts.attack == null ? 0.003 : opts.attack;
+  const decay = opts.decay == null ? duration : opts.decay;
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, at);
+  if (opts.sweepTo) {
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, opts.sweepTo), at + duration);
+  }
+
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol), at + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(at);
+  osc.stop(at + duration + 0.02);
+}
+
+function playDrawSound() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+
+  const patterns = [
+    () => {
+      playTone(t, 390, 0.07, { type: 'triangle', volume: 0.05 });
+      playTone(t + 0.06, 520, 0.09, { type: 'triangle', volume: 0.05 });
+    },
+    () => {
+      playTone(t, 330, 0.06, { type: 'sine', volume: 0.045 });
+      playTone(t + 0.05, 440, 0.08, { type: 'triangle', volume: 0.05 });
+      playTone(t + 0.11, 550, 0.08, { type: 'triangle', volume: 0.045 });
+    },
+    () => {
+      playTone(t, 460, 0.05, { type: 'square', volume: 0.035 });
+      playTone(t + 0.05, 620, 0.09, { type: 'triangle', volume: 0.05 });
+    },
+    () => {
+      playTone(t, 370, 0.09, { type: 'sine', sweepTo: 590, volume: 0.05 });
+    },
+    () => {
+      playTone(t, 410, 0.05, { type: 'triangle', volume: 0.045 });
+      playTone(t + 0.04, 520, 0.05, { type: 'triangle', volume: 0.045 });
+      playTone(t + 0.08, 690, 0.08, { type: 'triangle', volume: 0.05 });
+    },
+  ];
+
+  const idx = drawSoundIndex % patterns.length;
+  drawSoundIndex = (drawSoundIndex + 1) % patterns.length;
+  patterns[idx]();
+}
+
+function playBustSound() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(t, 220, 0.11, { type: 'sawtooth', sweepTo: 120, volume: 0.07 });
+  playTone(t + 0.07, 160, 0.14, { type: 'sawtooth', sweepTo: 80, volume: 0.06 });
+}
+
+function playFreezeSound() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(t, 980, 0.05, { type: 'triangle', volume: 0.04 });
+  playTone(t + 0.04, 740, 0.07, { type: 'sine', volume: 0.045 });
+  playTone(t + 0.09, 520, 0.1, { type: 'sine', volume: 0.05 });
+}
+
+function playFlip3Sound() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(t, 430, 0.05, { type: 'square', volume: 0.04 });
+  playTone(t + 0.05, 540, 0.05, { type: 'square', volume: 0.04 });
+  playTone(t + 0.1, 700, 0.1, { type: 'triangle', volume: 0.05 });
+}
+
+function playSoundForDraw(room) {
+  const card = room.lastDrawn;
+  if (!card) return;
+
+  if (card.type === 'special' && card.value === 'Freeze') {
+    playFreezeSound();
+    return;
+  }
+  if (card.type === 'special' && card.value === 'Flip3') {
+    playFlip3Sound();
+    return;
+  }
+
+  const drawer = (room.players || []).find(p => p.id === room.lastDrawerId);
+  if (card.type === 'number' && drawer && drawer.busted) {
+    playBustSound();
+    return;
+  }
+
+  playDrawSound();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+// Enter key support
+document.getElementById('create-name').addEventListener('keydown', e => e.key === 'Enter' && createRoom());
+document.getElementById('join-name').addEventListener('keydown',   e => e.key === 'Enter' && joinRoom());
+document.getElementById('join-code').addEventListener('keydown',   e => e.key === 'Enter' && joinRoom());
+document.getElementById('join-code').addEventListener('input', function() {
+  this.value = this.value.toUpperCase();
+});
+
+['pointerdown', 'keydown', 'touchstart'].forEach(evt => {
+  window.addEventListener(evt, () => ensureAudio(), { once: true });
+});
+
+document.getElementById('opponents').addEventListener('click', (e) => {
+  const card = e.target.closest('.opp-card.targetable');
+  if (!card) return;
+
+  const targetId = card.dataset.playerId;
+  if (!targetId) return;
+
+  if (!specialStageReady) {
+    showToast('Wait for the special card to finish staging');
+    return;
+  }
+
+  if (activeSpecialType === 'freeze') {
+    chooseFreezeTarget(targetId);
+  } else if (activeSpecialType === 'flip3') {
+    chooseFlip3Target(targetId);
+  }
+});
+
+// Try to reconnect to existing session
+window.addEventListener('load', () => {
+  const savedRoom = localStorage.getItem('flip7_room');
+  const savedId   = localStorage.getItem('flip7_id');
+  if (savedRoom && savedId) {
+    myId = savedId;
+    myRoomCode = savedRoom;
+    connect(() => {
+      send({ type: 'join', playerName: 'Reconnecting…', roomCode: savedRoom });
+    });
+  } else {
+    connect();
+  }
+});
+</script>
+</body>
+</html>
