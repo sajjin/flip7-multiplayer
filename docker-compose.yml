@@ -1,25 +1,35 @@
-version: "3.9"
-
 services:
   flip7:
     build: .
     container_name: flip7
     ports:
-      - "3000:4567"
+      - "${HOST_PORT:-3000}:${APP_PORT:-4567}"
     volumes:
       # Persist room state across container restarts
       - flip7-data:/data
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - PORT=4567
+      - PORT=${APP_PORT:-4567}
       - DATA_FILE=/data/rooms.json
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4567/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:${APP_PORT:-4567}/health"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: flip7-cloudflared
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    depends_on:
+      flip7:
+        condition: service_healthy
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
 
 volumes:
   flip7-data:

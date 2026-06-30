@@ -9,11 +9,26 @@ Real-time multiplayer Flip 7 using WebSockets, Node.js, and Docker.
 
 ### Option A — Docker Compose (recommended)
 
+1) Create env file:
+
 ```bash
-docker compose up -d
+cp .env.example .env
 ```
 
-Open **http://localhost:3000** — share your machine's IP with friends on any network.
+2) Set your tunnel token in `.env`:
+
+```env
+CLOUDFLARE_TUNNEL_TOKEN=<your-token>
+```
+
+3) Start services:
+
+```bash
+docker compose --profile tunnel up -d
+```
+
+Open **http://localhost:<HOST_PORT>** (default `3000`) to play locally.
+For local-only mode without Cloudflare, use `docker compose up -d`.
 
 ---
 
@@ -40,7 +55,22 @@ Then open `client/index.html` in a browser, or serve the client folder with any 
 
 ## Playing over the internet
 
-To let players outside your local network join:
+### Cloudflare Tunnel (recommended)
+
+1. In Cloudflare Zero Trust, create a tunnel and a public hostname.
+2. Point the hostname to `http://flip7:4567` (or your `APP_PORT` value).
+3. Copy the Docker tunnel token into `.env` as `CLOUDFLARE_TUNNEL_TOKEN`.
+4. Start/restart services:
+
+```bash
+docker compose --profile tunnel up -d
+```
+
+5. Share your hostname URL (for example `https://flip7.example.com`).
+
+WebSocket connections work through Cloudflare automatically because they are on the same origin as the app.
+
+### Alternative: Port Forwarding / ngrok
 
 1. **Port-forward port 3000** on your router to your machine's local IP.
 2. Players visit `http://<your-public-ip>:3000`
@@ -94,6 +124,9 @@ Browser ──WS──► Node.js/Express (port 3000)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | HTTP/WS port |
+| `HOST_PORT` | `3000` | Public port exposed on the server |
+| `APP_PORT` | `4567` | Internal HTTP/WS port used by app container |
+| `CLOUDFLARE_TUNNEL_TOKEN` | _(required for tunnel)_ | Cloudflare tunnel run token |
+| `PORT` | `4567` | HTTP/WS port inside container |
 | `DATA_FILE` | `/data/rooms.json` | Persistent storage path |
 | `NODE_ENV` | `production` | Environment |

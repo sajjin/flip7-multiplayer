@@ -647,7 +647,8 @@ body {
 //  Flip 7 — WebSocket Client
 // ════════════════════════════════════════
 
-const WS_URL = `ws://${location.host}`;
+const WS_PROTOCOL = location.protocol === 'https:' ? 'wss' : 'ws';
+const WS_URL = `${WS_PROTOCOL}://${location.host}`;
 
 let ws = null;
 let myId = localStorage.getItem('flip7_id') || null;
@@ -1049,7 +1050,9 @@ function renderGame(room, myPlayer) {
   }
 
   if (room.lastDrawn && typeof room.lastDrawSeq === 'number' && prevDrawSeq !== null && room.lastDrawSeq !== prevDrawSeq) {
-    playSoundForDraw(room);
+    if (room.lastDrawerId === myId) {
+      playSoundForDraw(room);
+    }
     if (room.lastDrawn.type === 'special') {
       animateSpecialToStage(room.lastDrawn);
     } else {
